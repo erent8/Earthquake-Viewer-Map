@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deprem Görüntüleyici</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/tr.js"></script>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --background-color: #ffffff;
+            --text-color: #333333;
+            --card-bg: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #64B5F6;
+            --background-color: #1a1a1a;
+            --text-color: #ffffff;
+            --card-bg: #2d2d2d;
+            --border-color: #404040;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        #map {
+            height: 600px;
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .earthquake-info {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .earthquake-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .earthquake-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .theme-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        .magnitude-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-switch">
+        <button class="btn btn-outline-primary" onclick="toggleTheme()">
+            <i class="fas fa-moon"></i> Tema Değiştir
+        </button>
+    </div>
+
+    <div class="loading" id="loadingIndicator">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Yükleniyor...</span>
+        </div>
+        <span class="ms-2">Veriler yükleniyor...</span>
+    </div>
+
+    <div class="container">
+        <h1 class="text-center mb-4">Deprem Görüntüleyici</h1>
+        
+        <div class="controls">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="form-label">Konum</label>
+                        <input type="text" id="location" class="form-control" placeholder="Şehir giriniz (örn: Istanbul)">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="form-label">Başlangıç Tarihi</label>
+                        <input type="text" id="startDate" class="form-control datepicker" placeholder="Başlangıç tarihi">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="form-label">Bitiş Tarihi</label>
+                        <input type="text" id="endDate" class="form-control datepicker" placeholder="Bitiş tarihi">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="form-label">Minimum Büyüklük</label>
+                        <input type="number" id="minMagnitude" class="form-control" min="1" max="10" step="0.1" value="1.0">
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12 text-center">
+                    <button onclick="searchEarthquakes()" class="btn btn-primary me-2">
+                        <i class="fas fa-search"></i> Ara
+                    </button>
+                    <button onclick="showAllEarthquakes()" class="btn btn-secondary">
+                        <i class="fas fa-globe"></i> Tüm Depremleri Göster
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+        <div class="earthquake-info" id="earthquakeInfo"></div>
+    </div>
+
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+    <script>
+        let map = L.map('map').setView([39.9334, 32.8597], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let markers = [];
+        
+        // Tarih seçici başlatma
+        flatpickr(".datepicker", {
+            locale: "tr",
+            dateFormat: "Y-m-d",
+            maxDate: "today"
+        });
+
+        function getMagnitudeColor(magnitude) {
+            if (magnitude >= 7.0) return '#FF0000';
+            if (magnitude >= 6.0) return '#FF4500';
+            if (magnitude >= 5.0) return '#FFA500';
+            if (magnitude >= 4.0) return '#FFD700';
+            if (magnitude >= 3.0) return '#FFFF00';
+            return '#90EE90';
+        }
+
+        function clearMarkers() {
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        }
+
+        function addEarthquakeMarkers(earthquakes) {
+            clearMarkers();
+            let infoHtml = '<h2>Son Depremler</h2><div class="row">';
+
+            earthquakes.features.forEach(eq => {
+                const coords = eq.geometry.coordinates;
+                const magnitude = eq.properties.mag;
+                const place = eq.properties.place;
+                const time = new Date(eq.properties.time).toLocaleString('tr-TR');
+                const depth = coords[2];
+
+                const marker = L.circle([coords[1], coords[0]], {
+                    color: getMagnitudeColor(magnitude),
+                    fillColor: getMagnitudeColor(magnitude),
+                    fillOpacity: 0.7,
+                    radius: magnitude * 15000
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div class="earthquake-popup">
+                        <h5>Deprem Detayları</h5>
+                        <p><strong>Büyüklük:</strong> ${magnitude}</p>
+                        <p><strong>Yer:</strong> ${place}</p>
+                        <p><strong>Zaman:</strong> ${time}</p>
+                        <p><strong>Derinlik:</strong> ${depth.toFixed(2)} km</p>
+                    </div>
+                `);
+
+                markers.push(marker);
+
+                infoHtml += `
+                    <div class="col-md-6 mb-3">
+                        <div class="earthquake-card">
+                            <span class="magnitude-badge" style="background-color: ${getMagnitudeColor(magnitude)}">
+                                ${magnitude}
+                            </span>
+                            <h5 class="mt-2">${place}</h5>
+                            <p class="mb-1"><i class="fas fa-clock"></i> ${time}</p>
+                            <p class="mb-1"><i class="fas fa-arrows-alt-v"></i> Derinlik: ${depth.toFixed(2)} km</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            infoHtml += '</div>';
+            document.getElementById('earthquakeInfo').innerHTML = infoHtml;
+        }
+
+        function searchEarthquakes() {
+            showLoading(true);
+            const location = document.getElementById('location').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const minMagnitude = document.getElementById('minMagnitude').value;
+
+            fetch(`/get_earthquakes?location=${location}&startDate=${startDate}&endDate=${endDate}&minMagnitude=${minMagnitude}`)
+                .then(response => response.json())
+                .then(data => {
+                    addEarthquakeMarkers(data);
+                    if (data.features.length > 0) {
+                        const firstEq = data.features[0].geometry.coordinates;
+                        map.setView([firstEq[1], firstEq[0]], 8);
+                    }
+                    showLoading(false);
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    showLoading(false);
+                });
+        }
+
+        function showAllEarthquakes() {
+            document.getElementById('location').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('minMagnitude').value = '1.0';
+            searchEarthquakes();
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+        }
+
+        // Sayfa yüklendiğinde tüm depremleri göster
+        showAllEarthquakes();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
