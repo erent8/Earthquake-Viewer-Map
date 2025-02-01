@@ -1,4 +1,4 @@
-# 🌍 Türkiye Deprem Görüntüleyici
+# 🌍 Dünya Deprem Görüntüleyici Uygulaması
 
 Bu proje, Türkiye ve dünya genelindeki depremleri gerçek zamanlı olarak görüntülemek için geliştirilmiş bir web uygulamasıdır. USGS (United States Geological Survey) API'sini kullanarak deprem verilerini çeker ve kullanıcı dostu bir arayüz ile sunar.
 
