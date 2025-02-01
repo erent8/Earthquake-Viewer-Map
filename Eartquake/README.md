@@ -38,8 +38,8 @@ python-dotenv==1.0.0
 
 1. Projeyi klonlayın:
 ```bash
-git clone https://github.com/kullaniciadi/deprem-goruntleyici.git
-cd deprem-goruntleyici
+git clone https://github.com/erent8/Earthquake-Viewer-Map
+cd Earthquake-Viewer-Map
 ```
 
 2. Gerekli paketleri yükleyin:
