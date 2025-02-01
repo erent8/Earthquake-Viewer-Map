@@ -87,19 +87,16 @@ http://[BILGISAYAR_IP]:5000
 - 🟢 4.0-4.9 : Açık Yeşil
 - 💚 3.0-3.9 : Yeşil
 
-## 📸 Ekran Görüntüleri
+## 📸 Ekran Görüntüleri![deprem ](https://github.com/user-attachments/assets/cc6458a5-2dd4-492d-8b87-98cc500a3994)
 
-### Ana Sayfa (Açık Tema)
-![Ana Sayfa Açık Tema](screenshots/light-theme.png)
 
-### Ana Sayfa (Koyu Tema)
-![Ana Sayfa Koyu Tema](screenshots/dark-theme.png)
+### Ana Sayfa ![son depremler](https://github.com/user-attachments/assets/75ad1883-1f38-4870-a7a9-8cc7e85e77a6)
+
 
 ### Mobil Görünüm
-![Mobil Görünüm](screenshots/mobile-view.png)
+![Mobil Görünüm]![WhatsApp Image 2025-02-02 at 01 06 15](https://github.com/user-attachments/assets/874af02e-aa9e-45a4-9d60-58f664560aa2)
+![WhatsApp Image 2025-02-02 at 01 06 17](https://github.com/user-attachments/assets/6ebad528-c2c7-4e53-afe8-efbe2fedf39d)
 
-### Filtreleme Örneği
-![Filtreleme Örneği](screenshots/filter-example.png)
 
 ## 🤝 Katkıda Bulunma
 
